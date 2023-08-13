@@ -11,6 +11,8 @@ import android.view.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
+import androidx.navigation.Navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -21,6 +23,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.PointOfInterest
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
@@ -40,6 +43,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private val defaultLocation = LatLng(DEFAULT_LAT, DEFAULT_LONG)
     private var lastKnownLocation: Location? = null
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+    private var marker: Marker? = null
+    private var pointOfInterest: PointOfInterest? = null
 
 
     override fun onCreateView(
@@ -59,15 +64,22 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
-        // TODO: call this function after the user confirms on the selected location
         onLocationSelected()
         return binding.root
     }
 
     private fun onLocationSelected() {
-        // TODO: When the user confirms on the selected location,
-        //  send back the selected location details to the view model
-        //  and navigate back to the previous fragment to save the reminder and add the geofence
+        binding.saveButton.setOnClickListener {
+            marker?.let {
+                _viewModel.apply {
+                    reminderSelectedLocationStr.value = it.title
+                    selectedPOI.value = pointOfInterest
+                    latitude.value = it.position.latitude
+                    longitude.value = it.position.longitude
+                }
+                findNavController().popBackStack()
+            }
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -109,21 +121,23 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private fun setMapClick(map: GoogleMap) {
         map.setOnMapClickListener { latLng ->
             map.clear()
-            val marker = map.addMarker(
+            marker = map.addMarker(
                 MarkerOptions()
                     .position(latLng)
                     .title(getString(R.string.dropped_pin))
             )
             marker?.showInfoWindow()
+            pointOfInterest = null
         }
         map.setOnPoiClickListener { poi ->
             map.clear()
-            val marker = map.addMarker(
+            marker = map.addMarker(
                 MarkerOptions()
                     .position(poi.latLng)
                     .title(poi.name)
             )
             marker?.showInfoWindow()
+            pointOfInterest = poi
         }
     }
 
