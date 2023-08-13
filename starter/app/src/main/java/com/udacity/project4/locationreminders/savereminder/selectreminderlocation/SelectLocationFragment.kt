@@ -116,6 +116,15 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             )
             marker?.showInfoWindow()
         }
+        map.setOnPoiClickListener { poi ->
+            map.clear()
+            val marker = map.addMarker(
+                MarkerOptions()
+                    .position(poi.latLng)
+                    .title(poi.name)
+            )
+            marker?.showInfoWindow()
+        }
     }
 
     // https://developers.google.com/maps/documentation/android-sdk/current-place-tutorial#kotlin_6
