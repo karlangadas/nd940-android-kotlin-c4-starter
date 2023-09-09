@@ -156,11 +156,7 @@ class SaveReminderFragment : BaseFragment() {
         }
 
         Log.d(TAG, "Request foreground only location permission")
-        ActivityCompat.requestPermissions(
-            requireActivity(),
-            permissionsArray,
-            resultCode
-        )
+        requestPermissions(permissionsArray, resultCode)
     }
 
     /*
