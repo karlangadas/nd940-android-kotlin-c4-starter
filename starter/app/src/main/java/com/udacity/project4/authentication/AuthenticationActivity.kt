@@ -9,14 +9,18 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.Observer
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.IdpResponse
 import com.google.firebase.auth.FirebaseAuth
 import com.udacity.project4.R
 import com.udacity.project4.databinding.ActivityAuthenticationBinding
 import com.udacity.project4.databinding.ActivityRemindersBinding
+import com.udacity.project4.locationreminders.RemindersActivity
 
 /**
  * This class should be the starting point of the app, It asks the users to sign in / register, and redirects the
@@ -24,6 +28,7 @@ import com.udacity.project4.databinding.ActivityRemindersBinding
  */
 class AuthenticationActivity : AppCompatActivity() {
 
+    private val viewModel by viewModels<LoginViewModel>()
     private lateinit var binding: ActivityAuthenticationBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,6 +36,7 @@ class AuthenticationActivity : AppCompatActivity() {
         val layoutId = R.layout.activity_authentication
         binding = DataBindingUtil.setContentView(this, layoutId)
         setContentView(binding.root)
+        observeAuthenticationState()
         binding.authButton.setOnClickListener { launchSignInFlow() }
         // TODO: Implement the create account and sign in using FirebaseUI,
         //  use sign in using email and sign in using Google
@@ -58,6 +64,28 @@ class AuthenticationActivity : AppCompatActivity() {
                 Log.i(TAG, "Sign in unsuccessful ${response?.error?.errorCode}")
             }
         }
+    }
+
+    /**
+     * Observes the authentication state and changes the UI accordingly.
+     * If there is a logged in user: go to RemindersActivity.
+     * If there is no logged in user: show a login button
+     */
+    private fun observeAuthenticationState() {
+        viewModel.authenticationState.observe(this, Observer { authenticationState ->
+            when (authenticationState) {
+                LoginViewModel.AuthenticationState.AUTHENTICATED -> {
+                    startActivity(Intent(this,
+                        RemindersActivity::class.java))
+                }
+                else -> {
+                    binding.authButton.text = getString(R.string.login)
+                    binding.authButton.setOnClickListener {
+                        launchSignInFlow()
+                    }
+                }
+            }
+        })
     }
 
     private fun launchSignInFlow() {
