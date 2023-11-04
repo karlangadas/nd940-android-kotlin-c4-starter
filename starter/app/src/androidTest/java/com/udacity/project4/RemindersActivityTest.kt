@@ -1,20 +1,28 @@
 package com.udacity.project4
 
+import android.app.Activity
 import android.app.Application
+import android.os.Build
+import android.view.View
 import androidx.test.core.app.ActivityScenario
+import androidx.test.core.app.ActivityScenario.ActivityAction
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.IdlingRegistry
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.RootMatchers.withDecorView
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
+import androidx.test.ext.junit.rules.activityScenarioRule
+import org.hamcrest.Matchers.not
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import androidx.test.rule.GrantPermissionRule
 import androidx.test.rule.GrantPermissionRule.grant
+import com.google.android.material.internal.ContextUtils.getActivity
 import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
@@ -26,6 +34,7 @@ import com.udacity.project4.util.DataBindingIdlingResource
 import com.udacity.project4.util.monitorActivity
 import com.udacity.project4.utils.EspressoIdlingResource
 import kotlinx.coroutines.runBlocking
+import org.hamcrest.Matchers
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -35,9 +44,9 @@ import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
-import org.koin.test.AutoCloseKoinTest
 import org.koin.test.KoinTest
 import org.koin.test.get
+
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
@@ -51,7 +60,8 @@ class RemindersActivityTest :
     @Rule
     @JvmField
     val grantPermissionRule: GrantPermissionRule =
-        grant(android.Manifest.permission.ACCESS_FINE_LOCATION,
+        grant(
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
             android.Manifest.permission.ACCESS_BACKGROUND_LOCATION,
             android.Manifest.permission.ACCESS_COARSE_LOCATION,
         )
@@ -116,9 +126,7 @@ class RemindersActivityTest :
     }
 
     @Test
-    fun saveReminder() = runBlocking {
-        repository.saveReminder(ReminderDTO("Reminder 1", "description 1", "location 1", 15.0, 15.0))
-
+    fun saveValidReminder_showSuccess() = runBlocking {
         // Start up Reminders screen
         val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
         dataBindingIdlingResource.monitorActivity(activityScenario)
@@ -141,8 +149,61 @@ class RemindersActivityTest :
         // Save Reminder
         onView(withId(R.id.saveReminder)).perform(click())
 
-        // Verify toast is displayed
+        // Verify toast and new reminder is displayed
+        onView(withText(R.string.reminder_saved))
+            .inRoot(withDecorView(not(getActivity(appContext)?.window?.decorView)))
+            .check(matches(isDisplayed()))
         onView(withText("My reminder")).check(matches(isDisplayed()))
+
+
+        // Make sure the activity is closed before resetting the db:
+        activityScenario.close()
+    }
+
+    @Test
+    fun saveReminderWithNoLocation_showLocationError() = runBlocking {
+        // Start up Reminders screen
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+        dataBindingIdlingResource.monitorActivity(activityScenario)
+
+        // Click on the fab and verify the screen is correct
+        onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.reminderTitle)).check(matches(isDisplayed()))
+        onView(withId(R.id.reminderDescription)).check(matches(isDisplayed()))
+        onView(withId(R.id.selectLocation)).check(matches(isDisplayed()))
+
+        // add title and description but no location
+        onView(withId(R.id.reminderTitle)).perform(replaceText("My reminder"))
+        onView(withId(R.id.reminderDescription)).perform(replaceText("My description"))
+
+        // Save Reminder
+        onView(withId(R.id.saveReminder)).perform(click())
+
+        // Verify snack bar is displayed
+        onView(withText(appContext.getString(R.string.err_select_location))).check(matches(isDisplayed()))
+
+
+        // Make sure the activity is closed before resetting the db:
+        activityScenario.close()
+    }
+
+    @Test
+    fun saveReminderWithNoTitle_showTitleError() = runBlocking {
+        // Start up Reminders screen
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+        dataBindingIdlingResource.monitorActivity(activityScenario)
+
+        // Click on the fab and verify the screen is correct
+        onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.reminderTitle)).check(matches(isDisplayed()))
+        onView(withId(R.id.reminderDescription)).check(matches(isDisplayed()))
+        onView(withId(R.id.selectLocation)).check(matches(isDisplayed()))
+
+        // Save Empty Reminder
+        onView(withId(R.id.saveReminder)).perform(click())
+
+        // Verify snack bar is displayed
+        onView(withText(appContext.getString(R.string.err_enter_title))).check(matches(isDisplayed()))
 
 
         // Make sure the activity is closed before resetting the db:

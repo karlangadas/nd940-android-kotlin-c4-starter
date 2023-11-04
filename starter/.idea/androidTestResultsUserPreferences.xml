@@ -3,6 +3,33 @@
   <component name="AndroidTestResultsUserPreferences">
     <option name="androidTestResultsTableState">
       <map>
+        <entry key="-635671527">
+          <value>
+            <AndroidTestResultsTableState>
+              <option name="preferredColumnWidths">
+                <map>
+                  <entry key="Duration" value="90" />
+                  <entry key="Pixel_5_API_29" value="120" />
+                  <entry key="Tests" value="360" />
+                  <entry key="espresso_emulator_24" value="120" />
+                </map>
+              </option>
+            </AndroidTestResultsTableState>
+          </value>
+        </entry>
+        <entry key="-350186815">
+          <value>
+            <AndroidTestResultsTableState>
+              <option name="preferredColumnWidths">
+                <map>
+                  <entry key="Duration" value="90" />
+                  <entry key="Pixel_5_API_29" value="120" />
+                  <entry key="Tests" value="360" />
+                </map>
+              </option>
+            </AndroidTestResultsTableState>
+          </value>
+        </entry>
         <entry key="-271820233">
           <value>
             <AndroidTestResultsTableState>
@@ -55,6 +82,19 @@
             </AndroidTestResultsTableState>
           </value>
         </entry>
+        <entry key="1285110085">
+          <value>
+            <AndroidTestResultsTableState>
+              <option name="preferredColumnWidths">
+                <map>
+                  <entry key="Duration" value="90" />
+                  <entry key="Pixel_5_API_29" value="120" />
+                  <entry key="Tests" value="360" />
+                </map>
+              </option>
+            </AndroidTestResultsTableState>
+          </value>
+        </entry>
         <entry key="1358951103">
           <value>
             <AndroidTestResultsTableState>
@@ -94,13 +134,28 @@
             </AndroidTestResultsTableState>
           </value>
         </entry>
-        <entry key="1960108270">
+        <entry key="1684158944">
           <value>
             <AndroidTestResultsTableState>
               <option name="preferredColumnWidths">
                 <map>
                   <entry key="Duration" value="90" />
                   <entry key="Tests" value="360" />
+                  <entry key="espresso_emulator_30" value="120" />
+                </map>
+              </option>
+            </AndroidTestResultsTableState>
+          </value>
+        </entry>
+        <entry key="1960108270">
+          <value>
+            <AndroidTestResultsTableState>
+              <option name="preferredColumnWidths">
+                <map>
+                  <entry key="Duration" value="90" />
+                  <entry key="Pixel_5_API_29" value="120" />
+                  <entry key="Tests" value="360" />
+                  <entry key="espresso_emulator_24" value="120" />
                   <entry key="espresso_emulator_30" value="120" />
                 </map>
               </option>

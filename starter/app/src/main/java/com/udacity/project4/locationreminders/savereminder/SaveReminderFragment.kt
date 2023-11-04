@@ -217,6 +217,7 @@ class SaveReminderFragment : BaseFragment() {
      */
     @SuppressLint("MissingPermission")
     private fun addGeofenceForReminder() {
+
         val reminderDataItem = ReminderDataItem(
             _viewModel.reminderTitle.value,
             _viewModel.reminderDescription.value,
@@ -230,8 +231,8 @@ class SaveReminderFragment : BaseFragment() {
             .setRequestId(reminderDataItem.id)
             // Set the circular region of this geofence.
             .setCircularRegion(
-                reminderDataItem.latitude!!,
-                reminderDataItem.longitude!!,
+                reminderDataItem.latitude?: 0.0,
+                reminderDataItem.longitude?: 0.0,
                 GeofenceConstants.GEOFENCE_RADIUS_IN_METERS
             )
             // This geofence gets automatically removed after this period of time.
