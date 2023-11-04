@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.udacity.project4.locationreminders.MainCoroutineRule
 import com.udacity.project4.locationreminders.data.FakeDataSource
+import com.udacity.project4.locationreminders.data.FakeDataSource.Companion.remindersNotFound
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -65,6 +66,19 @@ class RemindersListViewModelTest {
             advanceUntilIdle()
             assertThat(viewModel.showLoading.value).isEqualTo(false)
             assertThat(viewModel.showNoData.value).isEqualTo(true)
+        }
+
+    @Test
+    fun loadReminders_showError() =
+        runTest {
+            dataSource.shouldReturnError = true
+            // When loading reminders
+            viewModel.loadReminders()
+            assertThat(viewModel.showLoading.value).isEqualTo(true)
+
+            advanceUntilIdle()
+            assertThat(viewModel.showLoading.value).isEqualTo(false)
+            assertThat(viewModel.showSnackBar.value).isEqualTo(remindersNotFound)
         }
 
 }
