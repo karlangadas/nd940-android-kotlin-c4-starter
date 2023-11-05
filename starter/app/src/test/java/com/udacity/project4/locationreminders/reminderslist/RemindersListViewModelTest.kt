@@ -43,8 +43,8 @@ class RemindersListViewModelTest {
         runTest {
             val reminder1 = ReminderDTO("Reminder 1", "description 1", "location 1", 15.0, 15.0)
             val reminder2 = ReminderDTO("Reminder 2", "description 2", "location 2", 20.0, 20.0)
-            reminders.add(reminder1)
-            reminders.add(reminder2)
+            dataSource.saveReminder(reminder1)
+            dataSource.saveReminder(reminder2)
 
             // When loading reminders
             viewModel.loadReminders()

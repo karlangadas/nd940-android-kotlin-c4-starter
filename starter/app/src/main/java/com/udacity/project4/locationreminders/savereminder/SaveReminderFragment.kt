@@ -54,7 +54,7 @@ class SaveReminderFragment : BaseFragment() {
             requireActivity(),
             0,
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
+            PendingIntent.FLAG_MUTABLE)
     }
 
     private val runningQOrLater =
