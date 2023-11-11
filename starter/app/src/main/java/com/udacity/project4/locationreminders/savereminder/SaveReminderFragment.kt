@@ -8,13 +8,16 @@ import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.common.api.ResolvableApiException
@@ -24,6 +27,7 @@ import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.LocationSettingsRequest
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
@@ -54,11 +58,14 @@ class SaveReminderFragment : BaseFragment() {
             requireActivity(),
             0,
             intent,
-            PendingIntent.FLAG_MUTABLE)
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
     }
 
     private val runningQOrLater =
-        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+
+    private val runningTiramisuOrLater =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -202,8 +209,36 @@ class SaveReminderFragment : BaseFragment() {
         }
         locationSettingsResponseTask.addOnCompleteListener {
             if (it.isSuccessful) {
-                addGeofenceForReminder()
+                checkNotificationPermissionsAndAddGeofenceForReminder()
             }
+        }
+    }
+
+    private val requestNotificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                addGeofenceForReminder()
+            } else {
+                Snackbar.make(
+                    binding.root, R.string.no_notification_permission_error_message, Snackbar.LENGTH_LONG
+                ).show()
+            }
+        }
+
+    @TargetApi(33)
+    private fun checkNotificationPermissionsAndAddGeofenceForReminder() {
+        if (runningTiramisuOrLater) {
+            if (PackageManager.PERMISSION_GRANTED ==
+                ActivityCompat.checkSelfPermission(
+                    requireContext(), Manifest.permission.POST_NOTIFICATIONS
+                )
+            ) {
+                addGeofenceForReminder()
+            } else {
+                requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        } else {
+            addGeofenceForReminder()
         }
     }
 
@@ -260,7 +295,7 @@ class SaveReminderFragment : BaseFragment() {
                     addOnSuccessListener {
                         // geofence added, validate and save reminder
                         _viewModel.validateAndSaveReminder(reminderDataItem)
-                        Log.e(TAG, "Geofence added: id=${geofence.requestId}")
+                        Log.i(TAG, "Geofence added: id=${geofence.requestId}")
                     }
                     addOnFailureListener {
                         // Failed to add geofence.
