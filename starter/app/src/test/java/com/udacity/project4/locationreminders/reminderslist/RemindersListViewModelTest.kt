@@ -6,7 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import com.udacity.project4.locationreminders.MainCoroutineRule
 import com.udacity.project4.locationreminders.data.FakeDataSource
-import com.udacity.project4.locationreminders.data.FakeDataSource.Companion.remindersNotFound
+import com.udacity.project4.locationreminders.data.FakeDataSource.Companion.exceptionString
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -15,6 +15,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.context.stopKoin
 
 @RunWith(AndroidJUnit4::class)
 @ExperimentalCoroutinesApi
@@ -33,6 +34,7 @@ class RemindersListViewModelTest {
 
     @Before
     fun setUp() {
+        stopKoin()//stop the original app koin
         // Given a fresh ViewModel
         dataSource = FakeDataSource(reminders)
         viewModel = RemindersListViewModel(ApplicationProvider.getApplicationContext(), dataSource)
@@ -78,7 +80,7 @@ class RemindersListViewModelTest {
 
             advanceUntilIdle()
             assertThat(viewModel.showLoading.value).isEqualTo(false)
-            assertThat(viewModel.showSnackBar.value).isEqualTo(remindersNotFound)
+            assertThat(viewModel.showSnackBar.value).isEqualTo(exceptionString)
         }
 
 }
