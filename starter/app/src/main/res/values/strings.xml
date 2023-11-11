@@ -40,5 +40,13 @@
     <string name="geofence_too_many_geofences">Your app has registered too many geofences.</string>
     <string name="geofence_too_many_pending_intents">You have provided too many PendingIntents to the addGeofences() call.</string>
     <string name="error_adding_geofence">Error Happened, Can\'t Add Geofence</string>
-    <string name="no_notification_permission_error_message">Error: Notifications are not enabled</string>
+    <string name="no_notification_permission_error_message">Notifications must be enabled to use the app</string>
+    <string name="enable">Enable</string>
+
+
+    <!-- Error strings -->
+    <string name="no_location_service_dialog_message">For a better experience, turn on device location, which uses Google\'s location service.</string>
+    <string name="ok">ok</string>
+    <string name="no_thanks">No, thanks</string>
+
 </resources>

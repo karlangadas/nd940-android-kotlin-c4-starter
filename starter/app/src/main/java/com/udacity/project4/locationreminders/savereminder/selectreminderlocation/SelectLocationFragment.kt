@@ -11,13 +11,9 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.view.*
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
-import androidx.fragment.app.Fragment
-import androidx.navigation.Navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -35,7 +31,6 @@ import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
-import com.udacity.project4.locationreminders.savereminder.LOCATION_PERMISSION_INDEX
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
@@ -54,6 +49,18 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private var marker: Marker? = null
     private var pointOfInterest: PointOfInterest? = null
+
+
+private val requestFineLocationPermission =
+    registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            enableMyLocation()
+        } else {
+            Snackbar.make(
+                binding.root, R.string.permission_denied_explanation, Snackbar.LENGTH_LONG
+            ).show()
+        }
+    }
 
 
     override fun onCreateView(
@@ -197,10 +204,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         } else {
             map.isMyLocationEnabled = false
             map.uiSettings.isMyLocationButtonEnabled = false
-            requestPermissions(
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                REQUEST_LOCATION_PERMISSION
-            )
+            requestFineLocationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             lastKnownLocation = null
         }
     }

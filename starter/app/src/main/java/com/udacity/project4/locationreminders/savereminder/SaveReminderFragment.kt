@@ -4,10 +4,13 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.app.Activity.RESULT_OK
+import android.app.AlertDialog
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -117,25 +120,94 @@ class SaveReminderFragment : BaseFragment() {
      * https://github.com/udacity/android-kotlin-geo-fences/blob/master/app/src/main/java/com/example/android/treasureHunt/HuntMainActivity.kt
      */
     @TargetApi(29)
-    private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
-        // check if foreground location permission is granted
-        val foregroundLocationApproved = (
-                PackageManager.PERMISSION_GRANTED ==
-                        ActivityCompat.checkSelfPermission(
-                            requireContext(),
-                            Manifest.permission.ACCESS_FINE_LOCATION
-                        ))
-        // check if background location permission is granted
-        val backgroundPermissionApproved =
+    private fun foregroundAndBackgroundLocationPermissionApproved() = isForegroundPermissionApproved() && isBackgroundPermissionApproved()
+
+
+    private fun isForegroundPermissionApproved() = (
+            PackageManager.PERMISSION_GRANTED ==
+                    ActivityCompat.checkSelfPermission(
+                        requireContext(),
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ))
+    @TargetApi(29)
+    private fun isBackgroundPermissionApproved() = if (runningQOrLater) {
+        PackageManager.PERMISSION_GRANTED ==
+                ActivityCompat.checkSelfPermission(
+                    requireContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                )
+    } else {
+        true
+    }
+
+    private val foregroundLocationPermissionRequest =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
             if (runningQOrLater) {
-                PackageManager.PERMISSION_GRANTED ==
-                        ActivityCompat.checkSelfPermission(
-                            requireContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                        )
-            } else {
-                true
+                requestForegroundAndBackgroundLocationPermissions()
             }
-        return foregroundLocationApproved && backgroundPermissionApproved
+            else {
+                verifyUseLocationServiceEnabled()
+            }
+        }
+        else {
+            Snackbar.make(
+                binding.root,
+                R.string.permission_denied_explanation, Snackbar.LENGTH_LONG
+            ).setAction(R.string.enable) {
+                requestForegroundAndBackgroundLocationPermissions()
+            }.show()
+        }
+    }
+
+    private val backgroundLocationPermissionRequest =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                    verifyUseLocationServiceEnabled()
+            }
+            else {
+                Snackbar.make(
+                    binding.root,
+                    R.string.permission_denied_explanation, Snackbar.LENGTH_LONG
+                ).setAction(R.string.enable) {
+                    requestForegroundAndBackgroundLocationPermissions()
+                }.show()
+            }
+        }
+
+    private fun verifyUseLocationServiceEnabled() {
+        if (!isLocationServiceEnabled()) {
+            noLocationServiceAlertDialog().show()
+        } else {
+            addGeofenceForReminder()
+        }
+    }
+
+    private var locationServiceResultLauncher = registerForActivityResult(ActivityResultContracts
+        .StartActivityForResult()) {
+        Log.d(TAG, "SaveReminderFragment.activityResultLauncher.")
+        if (isLocationServiceEnabled()) {
+            addGeofenceForReminder()
+        } else {
+            Log.d(TAG, "SaveReminderFragment/Location service not enabled")
+        }
+    }
+
+    private fun noLocationServiceAlertDialog() =
+        AlertDialog.Builder(requireContext())
+        .setMessage(R.string.no_location_service_dialog_message)
+            .setCancelable(false)
+            .setPositiveButton(R.string.ok) { _, _ ->
+                locationServiceResultLauncher.launch(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+            }
+            .setNegativeButton(R.string.no_thanks) { dialog, _ ->
+                dialog.cancel()
+            }
+    .create()
+
+
+    private fun isLocationServiceEnabled(): Boolean {
+        val manager = requireActivity().getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return manager.isProviderEnabled(LocationManager.GPS_PROVIDER)
     }
 
     /*
@@ -149,24 +221,21 @@ class SaveReminderFragment : BaseFragment() {
         if (foregroundAndBackgroundLocationPermissionApproved())
             return
 
-        // Request the permission
-        var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-
-        // Result code depends on android version
-        val resultCode = when {
-            runningQOrLater -> {
-                permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
-            }
-
-            else -> REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
+        // https://knowledge.udacity.com/questions/766267
+        if (!isForegroundPermissionApproved()) {
+            Log.d(TAG, "Request foreground location permission")
+            foregroundLocationPermissionRequest
+                .launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
 
-        Log.d(TAG, "Request foreground only location permission")
-        requestPermissions(permissionsArray, resultCode)
+        if (!isBackgroundPermissionApproved() && runningQOrLater) {
+            Log.d(TAG, "Request background location permission")
+            backgroundLocationPermissionRequest
+                .launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        }
     }
 
-    private val locationPermission = registerForActivityResult(
+    private val locationServiceEnabledRequestLauncher = registerForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
@@ -174,8 +243,11 @@ class SaveReminderFragment : BaseFragment() {
         }
         else {
             Snackbar.make(
-                binding.root, R.string.location_required_error, Snackbar.LENGTH_LONG
-            ).show()
+                binding.saveReminderMain,
+                R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
+            ).setAction(android.R.string.ok) {
+                checkDeviceLocationSettingsAndStartGeofence()
+            }.show()
         }
     }
 
@@ -201,7 +273,8 @@ class SaveReminderFragment : BaseFragment() {
             if (exception is ResolvableApiException && resolve) {
                 // but this can be fixed by showing the user a dialog.
                 try {
-                    locationPermission.launch(IntentSenderRequest.Builder(exception.resolution).build())
+                    locationServiceEnabledRequestLauncher
+                        .launch(IntentSenderRequest.Builder(exception.resolution).build())
                 } catch (sendEx: IntentSender.SendIntentException) {
                     Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
                 }
@@ -229,7 +302,9 @@ class SaveReminderFragment : BaseFragment() {
             } else {
                 Snackbar.make(
                     binding.root, R.string.no_notification_permission_error_message, Snackbar.LENGTH_LONG
-                ).show()
+                ).setAction(R.string.enable) {
+                    checkNotificationPermissionsAndAddGeofenceForReminder()
+                }.show()
             }
         }
 
