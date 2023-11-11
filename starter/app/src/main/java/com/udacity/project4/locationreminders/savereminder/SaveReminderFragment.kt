@@ -3,6 +3,7 @@ package com.udacity.project4.locationreminders.savereminder
 import android.Manifest
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
+import android.app.Activity.RESULT_OK
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.IntentSender
@@ -11,12 +12,12 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
@@ -27,7 +28,6 @@ import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.LocationSettingsRequest
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
@@ -166,6 +166,19 @@ class SaveReminderFragment : BaseFragment() {
         requestPermissions(permissionsArray, resultCode)
     }
 
+    private val locationPermission = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            checkDeviceLocationSettingsAndStartGeofence()
+        }
+        else {
+            Snackbar.make(
+                binding.root, R.string.location_required_error, Snackbar.LENGTH_LONG
+            ).show()
+        }
+    }
+
     /*
      *  Uses the Location Client to check the current state of location settings, and gives the user
      *  the opportunity to turn on location services within our app.
@@ -188,12 +201,7 @@ class SaveReminderFragment : BaseFragment() {
             if (exception is ResolvableApiException && resolve) {
                 // but this can be fixed by showing the user a dialog.
                 try {
-                    // Show the dialog by calling startResolutionForResult(),
-                    // and check the result in onActivityResult().
-                    exception.startResolutionForResult(
-                        requireActivity(),
-                        REQUEST_TURN_DEVICE_LOCATION_ON
-                    )
+                    locationPermission.launch(IntentSenderRequest.Builder(exception.resolution).build())
                 } catch (sendEx: IntentSender.SendIntentException) {
                     Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
                 }
