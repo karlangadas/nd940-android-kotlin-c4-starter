@@ -10,24 +10,96 @@
             type="com.udacity.project4.locationreminders.reminderslist.ReminderDataItem" />
     </data>
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
         android:orientation="vertical"
+        android:padding="@dimen/padding_large"
         tools:context=".locationreminders.ReminderDescriptionActivity">
 
         <!-- TODO: Add the design of the reminder details -->
 
         <TextView
+            android:id="@+id/title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="Reminder Details"
-            android:textSize="@dimen/text_size_large"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:text="@string/reminder_title"
+            android:layout_margin="@dimen/padding_small"
+            android:textSize="@dimen/text_size_normal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-    </LinearLayout>
+            app:layout_constraintTop_toTopOf="parent"/>
+
+        <TextView
+          android:id="@+id/title_content"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:text="@{reminderDataItem.title}"
+          tools:text="Go to pick new cellphone"
+          android:textStyle="bold"
+          android:layout_margin="@dimen/padding_small"
+          android:textSize="@dimen/text_size_large"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:layout_constraintStart_toStartOf="parent"
+          app:layout_constraintTop_toBottomOf="@+id/title"/>
+
+        <TextView
+          android:id="@+id/description"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:text="@string/reminder_desc"
+          android:layout_margin="@dimen/padding_small"
+          android:textSize="@dimen/text_size_normal"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:layout_constraintStart_toStartOf="parent"
+          app:layout_constraintTop_toBottomOf="@+id/title_content"/>
+
+        <TextView
+          android:id="@+id/description_content"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:text="@{reminderDataItem.description}"
+          tools:text="Seller name is Mike. Pay him $190"
+          android:textStyle="bold"
+          android:layout_margin="@dimen/padding_small"
+          android:textSize="@dimen/text_size_large"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:layout_constraintStart_toStartOf="parent"
+          app:layout_constraintTop_toBottomOf="@+id/description"/>
+
+        <TextView
+          android:id="@+id/location"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:text="@string/reminder_location"
+          android:layout_margin="@dimen/padding_small"
+          android:textSize="@dimen/text_size_normal"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:layout_constraintStart_toStartOf="parent"
+          app:layout_constraintTop_toBottomOf="@+id/description_content"/>
+
+        <TextView
+          android:id="@+id/location_description"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:text="@{reminderDataItem.location}"
+          tools:text="Starbucks"
+          android:textStyle="bold"
+          android:layout_margin="@dimen/padding_small"
+          android:textSize="@dimen/text_size_large"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:layout_constraintStart_toStartOf="parent"
+          app:layout_constraintTop_toBottomOf="@+id/location"/>
+
+        <com.google.android.gms.maps.MapView
+          android:id="@+id/map_view"
+          android:layout_width="0dp"
+          android:layout_height="0dp"
+          android:layout_marginTop="@dimen/padding_small"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:layout_constraintStart_toStartOf="parent"
+          app:layout_constraintTop_toBottomOf="@+id/location_description"
+          app:layout_constraintBottom_toBottomOf="parent"
+          />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
